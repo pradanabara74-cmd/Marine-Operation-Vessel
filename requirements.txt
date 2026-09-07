@@ -1,4 +1,8 @@
 streamlit
 pandas
-crewai
-langchain-openai
+numpy
+pydantic==1.10.13
+crewai==0.28.8
+langchain
+openai
+google-search-results
