@@ -1,306 +1,516 @@
+import os
 import streamlit as st
-import pandas as pd
-from datetime import datetime, date
-from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# ============================================================
+# FLATTFORM MARITIME AI COMPANY
+# 25 AI EMPLOYEES
+# ============================================================
 
 st.set_page_config(
-    page_title="Marine Operation Vessel",
+    page_title="FLATTFORM Maritime AI",
     page_icon="⚓",
-    layout="wide",
+    layout="wide"
 )
 
-DATA_DIR = Path("data")
-DATA_DIR.mkdir(exist_ok=True)
+# ============================================================
+# 25 AI EMPLOYEES
+# ============================================================
 
-def load_csv(name, columns):
-    p = DATA_DIR / name
-    if p.exists():
-        return pd.read_csv(p)
-    return pd.DataFrame(columns=columns)
+AI_EMPLOYEES = [
 
-def save_csv(df, name):
-    df.to_csv(DATA_DIR / name, index=False)
+    {
+        "name": "AI CEO",
+        "department": "Executive",
+        "icon": "👔",
+        "scope": "Strategi perusahaan, prioritas bisnis, koordinasi seluruh departemen."
+    },
 
-# ---------- Sidebar ----------
-st.sidebar.title("⚓ Marine Operation Vessel")
-st.sidebar.caption("Vessel Operations Management System")
+    {
+        "name": "AI Marine Superintendent",
+        "department": "Marine Operations",
+        "icon": "⚓",
+        "scope": "Operasi kapal, keselamatan, kesiapan kapal dan dukungan kepada Master."
+    },
 
-menu = st.sidebar.radio(
-    "MENU",
-    [
-        "Dashboard",
-        "Vessel Master",
-        "Daily Operation",
-        "Crew",
-        "Fuel & Consumption",
-        "Maintenance",
-        "Incident / Near Miss",
-        "Reports",
-    ],
-)
+    {
+        "name": "AI DPA",
+        "department": "ISM / Safety",
+        "icon": "🛡️",
+        "scope": "ISM Code, SMS, safety management, audit, NCR dan corrective action."
+    },
 
-# ---------- Data ----------
-vessel_cols = [
-    "Vessel Name","IMO / Reg No","Vessel Type","Flag",
-    "Call Sign","DWT (ton)","LOA (m)","Engine (kW)",
-    "Status","Last Update"
-]
-op_cols = [
-    "Date","Vessel","Location","Operation",
-    "Activity","Start Time","End Time","Weather",
-    "Wind (kn)","Wave (m)","Status","Remarks"
-]
-crew_cols = [
-    "Name","Position","Nationality","Certificate",
-    "Certificate Expiry","Medical Expiry","Status"
-]
-fuel_cols = [
-    "Date","Vessel","Fuel Type","Opening (L)",
-    "Received (L)","Consumed (L)","Closing (L)","Engine Hour"
-]
-maint_cols = [
-    "Date","Vessel","Equipment","Maintenance Type",
-    "Description","Priority","Status","Next Due"
-]
-incident_cols = [
-    "Date","Vessel","Location","Type","Severity",
-    "Description","Immediate Action","Status"
-]
+    {
+        "name": "AI QHSE Manager",
+        "department": "QHSE",
+        "icon": "🏭",
+        "scope": "Quality, Health, Safety, Environment, audit dan continuous improvement."
+    },
 
-vessels = load_csv("vessels.csv", vessel_cols)
-operations = load_csv("daily_operations.csv", op_cols)
-crew = load_csv("crew.csv", crew_cols)
-fuel = load_csv("fuel.csv", fuel_cols)
-maintenance = load_csv("maintenance.csv", maint_cols)
-incidents = load_csv("incidents.csv", incident_cols)
+    {
+        "name": "AI Technical Superintendent",
+        "department": "Technical",
+        "icon": "⚙️",
+        "scope": "Machinery, maintenance, dry dock, reliability dan technical defects."
+    },
 
-# ---------- Dashboard ----------
-if menu == "Dashboard":
-    st.title("⚓ Marine Operation Vessel")
-    st.subheader("Operational Dashboard")
+    {
+        "name": "AI Crewing Manager",
+        "department": "Crewing",
+        "icon": "👨‍✈️",
+        "scope": "Crew planning, certification, manning, crew welfare dan dokumentasi."
+    },
 
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Total Vessel", len(vessels))
-    c2.metric("Operation Log", len(operations))
-    c3.metric("Maintenance Open", int((maintenance["Status"] == "Open").sum()) if len(maintenance) else 0)
-    c4.metric("Incident Open", int((incidents["Status"] == "Open").sum()) if len(incidents) else 0)
+    {
+        "name": "AI Chief Engineer",
+        "department": "Engineering",
+        "icon": "🔧",
+        "scope": "Engine room, machinery, maintenance dan troubleshooting."
+    },
 
-    st.divider()
+    {
+        "name": "AI Master Mariner",
+        "department": "Ship Operations",
+        "icon": "🚢",
+        "scope": "Perspektif Master, voyage execution, keselamatan dan operational decision."
+    },
 
-    left, right = st.columns(2)
-    with left:
-        st.markdown("### Vessel Status")
-        if len(vessels):
-            st.bar_chart(vessels["Status"].value_counts())
-        else:
-            st.info("Belum ada data vessel. Tambahkan melalui menu Vessel Master.")
+    {
+        "name": "AI Navigation Officer",
+        "department": "Navigation",
+        "icon": "🧭",
+        "scope": "Passage planning, bridge procedures, navigation risk dan publications."
+    },
 
-    with right:
-        st.markdown("### Operation Status")
-        if len(operations):
-            st.bar_chart(operations["Status"].value_counts())
-        else:
-            st.info("Belum ada daily operation.")
+    {
+        "name": "AI Cargo Specialist",
+        "department": "Cargo",
+        "icon": "📦",
+        "scope": "Cargo planning, cargo care, loading, discharging dan cargo documentation."
+    },
 
-    st.markdown("### Recent Operations")
-    st.dataframe(operations.tail(10), use_container_width=True, hide_index=True)
+    {
+        "name": "AI Port Operations",
+        "department": "Port",
+        "icon": "⚓",
+        "scope": "Port call, berth planning, agent, turnaround dan port documentation."
+    },
 
-# ---------- Vessel Master ----------
-elif menu == "Vessel Master":
-    st.title("🚢 Vessel Master")
-    with st.form("vessel_form", clear_on_submit=True):
-        cols = st.columns(3)
-        name = cols[0].text_input("Vessel Name *")
-        imo = cols[1].text_input("IMO / Registration No")
-        vtype = cols[2].selectbox("Vessel Type", ["AHTS","Tug Boat","Supply Vessel","Crew Boat","Barge","Utility Vessel","Other"])
-        flag = cols[0].text_input("Flag", "Indonesia")
-        call = cols[1].text_input("Call Sign")
-        dwt = cols[2].number_input("DWT (ton)", min_value=0.0)
-        loa = cols[0].number_input("LOA (m)", min_value=0.0)
-        engine = cols[1].number_input("Engine Power (kW)", min_value=0.0)
-        status = cols[2].selectbox("Status", ["Operational","Standby","Under Maintenance","Off Hire"])
-        submitted = st.form_submit_button("💾 Save Vessel")
+    {
+        "name": "AI Chartering Manager",
+        "department": "Chartering",
+        "icon": "📑",
+        "scope": "Charter party, fixture, laytime dan commercial-operational interface."
+    },
 
-        if submitted:
-            if not name:
-                st.error("Vessel Name wajib diisi.")
-            else:
-                new = pd.DataFrame([{
-                    "Vessel Name": name, "IMO / Reg No": imo, "Vessel Type": vtype,
-                    "Flag": flag, "Call Sign": call, "DWT (ton)": dwt, "LOA (m)": loa,
-                    "Engine (kW)": engine, "Status": status,
-                    "Last Update": datetime.now().strftime("%Y-%m-%d %H:%M")
-                }])
-                vessels = pd.concat([vessels, new], ignore_index=True)
-                save_csv(vessels, "vessels.csv")
-                st.success("Data vessel berhasil disimpan.")
+    {
+        "name": "AI Commercial Manager",
+        "department": "Commercial",
+        "icon": "💼",
+        "scope": "Customer requirements, voyage economics dan commercial performance."
+    },
 
-    st.dataframe(vessels, use_container_width=True, hide_index=True)
+    {
+        "name": "AI Marine Claims",
+        "department": "Claims",
+        "icon": "📋",
+        "scope": "Marine incident, claims, evidence, timeline dan claims preparation."
+    },
 
-# ---------- Daily Operation ----------
-elif menu == "Daily Operation":
-    st.title("🧭 Daily Marine Operation")
-    vessel_options = vessels["Vessel Name"].dropna().tolist() if len(vessels) else ["Belum ada vessel"]
+    {
+        "name": "AI Maritime Lawyer",
+        "department": "Legal",
+        "icon": "⚖️",
+        "scope": "Maritime contracts, disputes, regulatory issue spotting dan legal support."
+    },
 
-    with st.form("operation_form", clear_on_submit=True):
-        c = st.columns(3)
-        op_date = c[0].date_input("Date", date.today())
-        vessel = c[1].selectbox("Vessel", vessel_options)
-        location = c[2].text_input("Location / Field")
-        operation = c[0].selectbox("Operation Type", [
-            "Standby","Supply Run","Towing","Anchor Handling",
-            "Crew Transfer","Bunkering","Cargo Operation","Other"
-        ])
-        activity = c[1].text_input("Activity / Job Description")
-        weather = c[2].selectbox("Weather", ["Good","Moderate","Poor","Storm"])
-        start = c[0].text_input("Start Time", "08:00")
-        end = c[1].text_input("End Time", "17:00")
-        wind = c[2].number_input("Wind (kn)", min_value=0.0)
-        wave = c[0].number_input("Wave Height (m)", min_value=0.0)
-        status = c[1].selectbox("Status", ["Planned","On Going","Completed","Cancelled"])
-        remarks = c[2].text_input("Remarks")
-        submitted = st.form_submit_button("💾 Save Operation")
+    {
+        "name": "AI ISPS Security Officer",
+        "department": "Security",
+        "icon": "🔐",
+        "scope": "ISPS Code, Ship Security Plan dan maritime security."
+    },
 
-        if submitted:
-            new = pd.DataFrame([{
-                "Date": op_date, "Vessel": vessel, "Location": location,
-                "Operation": operation, "Activity": activity,
-                "Start Time": start, "End Time": end, "Weather": weather,
-                "Wind (kn)": wind, "Wave (m)": wave, "Status": status, "Remarks": remarks
-            }])
-            operations = pd.concat([operations, new], ignore_index=True)
-            save_csv(operations, "daily_operations.csv")
-            st.success("Daily operation berhasil disimpan.")
+    {
+        "name": "AI Environmental Officer",
+        "department": "Environment",
+        "icon": "🌊",
+        "scope": "MARPOL, pollution prevention, waste, emissions dan environmental compliance."
+    },
 
-    st.dataframe(operations, use_container_width=True, hide_index=True)
+    {
+        "name": "AI Vetting Officer",
+        "department": "Vetting",
+        "icon": "🔎",
+        "scope": "Vetting preparation, inspection readiness dan risk gap analysis."
+    },
 
-# ---------- Crew ----------
-elif menu == "Crew":
-    st.title("👷 Crew Management")
-    with st.form("crew_form", clear_on_submit=True):
-        c = st.columns(3)
-        name = c[0].text_input("Crew Name *")
-        position = c[1].selectbox("Position", ["Master","Chief Officer","2nd Officer","Chief Engineer","2nd Engineer","AB","Oiler","Bosun","Cook","Other"])
-        nationality = c[2].text_input("Nationality", "Indonesia")
-        cert = c[0].text_input("Main Certificate")
-        cert_exp = c[1].date_input("Certificate Expiry", date.today())
-        med_exp = c[2].date_input("Medical Expiry", date.today())
-        status = c[0].selectbox("Status", ["On Board","Available","On Leave","Off"])
-        submitted = st.form_submit_button("💾 Save Crew")
-        if submitted:
-            if not name:
-                st.error("Crew Name wajib diisi.")
-            else:
-                new = pd.DataFrame([{
-                    "Name": name, "Position": position, "Nationality": nationality,
-                    "Certificate": cert, "Certificate Expiry": cert_exp,
-                    "Medical Expiry": med_exp, "Status": status
-                }])
-                crew = pd.concat([crew, new], ignore_index=True)
-                save_csv(crew, "crew.csv")
-                st.success("Data crew berhasil disimpan.")
-    st.dataframe(crew, use_container_width=True, hide_index=True)
+    {
+        "name": "AI SIRE Inspector",
+        "department": "Inspection",
+        "icon": "📝",
+        "scope": "SIRE inspection preparation, observations, evidence dan close-out."
+    },
 
-# ---------- Fuel ----------
-elif menu == "Fuel & Consumption":
-    st.title("⛽ Fuel & Consumption")
-    vessel_options = vessels["Vessel Name"].dropna().tolist() if len(vessels) else ["Belum ada vessel"]
-    with st.form("fuel_form", clear_on_submit=True):
-        c = st.columns(4)
-        d = c[0].date_input("Date", date.today())
-        vessel = c[1].selectbox("Vessel", vessel_options)
-        ftype = c[2].selectbox("Fuel Type", ["MGO","HFO","Diesel","Lubricant"])
-        opening = c[3].number_input("Opening (L)", min_value=0.0)
-        received = c[0].number_input("Received (L)", min_value=0.0)
-        consumed = c[1].number_input("Consumed (L)", min_value=0.0)
-        engine_hr = c[2].number_input("Engine Hour", min_value=0.0)
-        closing = opening + received - consumed
-        c[3].metric("Calculated Closing (L)", f"{closing:,.0f}")
-        submitted = st.form_submit_button("💾 Save Fuel Record")
-        if submitted:
-            new = pd.DataFrame([{
-                "Date": d, "Vessel": vessel, "Fuel Type": ftype,
-                "Opening (L)": opening, "Received (L)": received,
-                "Consumed (L)": consumed, "Closing (L)": closing,
-                "Engine Hour": engine_hr
-            }])
-            fuel = pd.concat([fuel, new], ignore_index=True)
-            save_csv(fuel, "fuel.csv")
-            st.success("Fuel record berhasil disimpan.")
-    st.dataframe(fuel, use_container_width=True, hide_index=True)
+    {
+        "name": "AI PSC Advisor",
+        "department": "Port State Control",
+        "icon": "🚨",
+        "scope": "PSC preparation, deficiency prevention dan corrective action."
+    },
 
-# ---------- Maintenance ----------
-elif menu == "Maintenance":
-    st.title("🔧 Maintenance Management")
-    vessel_options = vessels["Vessel Name"].dropna().tolist() if len(vessels) else ["Belum ada vessel"]
-    with st.form("maintenance_form", clear_on_submit=True):
-        c = st.columns(4)
-        d = c[0].date_input("Date", date.today())
-        vessel = c[1].selectbox("Vessel", vessel_options)
-        equipment = c[2].text_input("Equipment")
-        mtype = c[3].selectbox("Maintenance Type", ["Preventive","Corrective","Inspection","Calibration"])
-        desc = c[0].text_input("Description")
-        priority = c[1].selectbox("Priority", ["Low","Medium","High","Critical"])
-        status = c[2].selectbox("Status", ["Open","In Progress","Completed"])
-        next_due = c[3].date_input("Next Due", date.today())
-        submitted = st.form_submit_button("💾 Save Maintenance")
-        if submitted:
-            new = pd.DataFrame([{
-                "Date": d, "Vessel": vessel, "Equipment": equipment,
-                "Maintenance Type": mtype, "Description": desc,
-                "Priority": priority, "Status": status, "Next Due": next_due
-            }])
-            maintenance = pd.concat([maintenance, new], ignore_index=True)
-            save_csv(maintenance, "maintenance.csv")
-            st.success("Maintenance berhasil disimpan.")
-    st.dataframe(maintenance, use_container_width=True, hide_index=True)
+    {
+        "name": "AI Procurement Manager",
+        "department": "Procurement",
+        "icon": "🛒",
+        "scope": "Purchasing, vendor evaluation, critical spare parts dan procurement."
+    },
 
-# ---------- Incident ----------
-elif menu == "Incident / Near Miss":
-    st.title("⚠️ Incident / Near Miss")
-    vessel_options = vessels["Vessel Name"].dropna().tolist() if len(vessels) else ["Belum ada vessel"]
-    with st.form("incident_form", clear_on_submit=True):
-        c = st.columns(3)
-        d = c[0].date_input("Date", date.today())
-        vessel = c[1].selectbox("Vessel", vessel_options)
-        location = c[2].text_input("Location")
-        itype = c[0].selectbox("Type", ["Incident","Near Miss","Unsafe Act","Unsafe Condition","Environmental"])
-        severity = c[1].selectbox("Severity", ["Low","Medium","High","Critical"])
-        desc = c[2].text_area("Description")
-        action = c[0].text_area("Immediate Action")
-        status = c[1].selectbox("Status", ["Open","Investigation","Closed"])
-        submitted = st.form_submit_button("💾 Save Report")
-        if submitted:
-            new = pd.DataFrame([{
-                "Date": d, "Vessel": vessel, "Location": location, "Type": itype,
-                "Severity": severity, "Description": desc,
-                "Immediate Action": action, "Status": status
-            }])
-            incidents = pd.concat([incidents, new], ignore_index=True)
-            save_csv(incidents, "incidents.csv")
-            st.success("Incident/Near Miss berhasil disimpan.")
-    st.dataframe(incidents, use_container_width=True, hide_index=True)
+    {
+        "name": "AI Finance Manager",
+        "department": "Finance",
+        "icon": "💰",
+        "scope": "Budget, voyage cost, financial reporting dan financial control."
+    },
 
-# ---------- Reports ----------
-elif menu == "Reports":
-    st.title("📊 Reports & Export")
-    datasets = {
-        "Vessel Master": vessels,
-        "Daily Operation": operations,
-        "Crew": crew,
-        "Fuel": fuel,
-        "Maintenance": maintenance,
-        "Incident": incidents,
+    {
+        "name": "AI HR Manager",
+        "department": "Human Resources",
+        "icon": "👥",
+        "scope": "HR policy, workforce planning, performance dan organization."
+    },
+
+    {
+        "name": "AI Training Manager",
+        "department": "Training",
+        "icon": "🎓",
+        "scope": "Training matrix, competency, drill, familiarization dan development."
+    },
+
+    {
+        "name": "AI Maritime Intelligence",
+        "department": "Intelligence",
+        "icon": "🧠",
+        "scope": "Maritime intelligence, trends, risks, market signals dan management briefing."
     }
-    selected = st.selectbox("Select Report", list(datasets.keys()))
-    df = datasets[selected]
-    st.dataframe(df, use_container_width=True, hide_index=True)
-    st.download_button(
-        "⬇️ Download CSV",
-        data=df.to_csv(index=False).encode("utf-8"),
-        file_name=selected.lower().replace(" ","_") + ".csv",
-        mime="text/csv",
-    )
+]
 
-st.sidebar.divider()
-st.sidebar.caption("Marine Operation Vessel • Local data storage")
+
+# ============================================================
+# HEADER
+# ============================================================
+
+st.title("⚓ FLATTFORM")
+st.subheader("Maritime Artificial Intelligence Company")
+
+st.write(
+    "Platform AI dengan 25 AI Employees khusus industri pelayaran."
+)
+
+st.divider()
+
+
+# ============================================================
+# SIDEBAR
+# ============================================================
+
+st.sidebar.title("⚓ FLATTFORM")
+
+st.sidebar.write("### 25 AI Employees")
+
+departments = sorted(
+    list(set(employee["department"] for employee in AI_EMPLOYEES))
+)
+
+department_filter = st.sidebar.selectbox(
+    "Pilih Department",
+    ["ALL"] + departments
+)
+
+if department_filter == "ALL":
+
+    employees = AI_EMPLOYEES
+
+else:
+
+    employees = [
+        employee
+        for employee in AI_EMPLOYEES
+        if employee["department"] == department_filter
+    ]
+
+
+employee_names = [
+    employee["name"]
+    for employee in employees
+]
+
+selected_name = st.sidebar.selectbox(
+    "Pilih AI Employee",
+    employee_names
+)
+
+
+selected_employee = next(
+    employee
+    for employee in employees
+    if employee["name"] == selected_name
+)
+
+
+# ============================================================
+# EMPLOYEE INFORMATION
+# ============================================================
+
+st.header(
+    f"{selected_employee['icon']} {selected_employee['name']}"
+)
+
+st.write(
+    f"**Department:** {selected_employee['department']}"
+)
+
+st.write(
+    f"**Tugas:** {selected_employee['scope']}"
+)
+
+st.divider()
+
+
+# ============================================================
+# AI CHAT
+# ============================================================
+
+st.subheader("💬 Konsultasi dengan AI Employee")
+
+question = st.text_area(
+    "Masukkan pertanyaan atau tugas:",
+    placeholder=(
+        "Contoh:\n"
+        "Buatkan checklist persiapan PSC kapal sebelum arrival.\n\n"
+        "Atau:\n"
+        "Analisa risiko operasi bunkering."
+    ),
+    height=180
+)
+
+
+# ============================================================
+# AI ENGINE
+# ============================================================
+
+def local_response(employee, question):
+
+    return f"""
+### {employee['icon']} {employee['name']}
+
+**Department:** {employee['department']}
+
+### Analisis Awal
+
+Pertanyaan:
+
+> {question}
+
+### Ruang Lingkup
+
+Saya bertindak sebagai:
+
+**{employee['name']}**
+
+dengan fungsi:
+
+{employee['scope']}
+
+### Pendekatan
+
+1. Identifikasi masalah utama.
+2. Identifikasi kapal dan aktivitas terkait.
+3. Identifikasi risiko keselamatan.
+4. Identifikasi risiko operasional.
+5. Identifikasi aspek compliance.
+6. Periksa SMS dan prosedur perusahaan.
+7. Tentukan tindakan segera.
+8. Tentukan corrective action.
+9. Tentukan PIC.
+10. Tentukan deadline dan evidence yang diperlukan.
+
+### Rekomendasi
+
+Untuk keputusan yang berkaitan dengan keselamatan kapal, hukum,
+sertifikasi atau compliance, keputusan akhir harus diverifikasi
+terhadap prosedur perusahaan, regulasi yang berlaku dan competent person.
+
+**FLATTFORM adalah decision-support system dan bukan pengganti Master,
+DPA, Superintendent, Class, Flag State, Port Authority atau Legal Counsel.**
+"""
+
+
+def ai_response(employee, question):
+
+    api_key = os.getenv("OPENAI_API_KEY")
+
+    if not api_key:
+
+        return local_response(
+            employee,
+            question
+        )
+
+    try:
+
+        from openai import OpenAI
+
+        client = OpenAI(
+            api_key=api_key
+        )
+
+        prompt = f"""
+You are {employee['name']}.
+
+Department:
+{employee['department']}
+
+Professional scope:
+{employee['scope']}
+
+You are part of FLATTFORM,
+an AI company for the maritime industry.
+
+Answer professionally and practically.
+
+Separate:
+- Facts
+- Assumptions
+- Risks
+- Recommendations
+- Immediate actions
+- Corrective actions
+- Evidence required
+
+Never invent maritime regulations.
+
+For legal, safety or compliance matters,
+recommend verification against current official
+requirements and company SMS.
+
+User question:
+
+{question}
+"""
+
+        response = client.responses.create(
+            model="gpt-4o-mini",
+            input=prompt
+        )
+
+        return response.output_text
+
+    except Exception as error:
+
+        return (
+            local_response(
+                employee,
+                question
+            )
+            +
+            f"\n\nAI connection note: {error}"
+        )
+
+
+# ============================================================
+# ASK BUTTON
+# ============================================================
+
+if st.button(
+    "🚀 ASK FLATTFORM AI",
+    type="primary",
+    use_container_width=True
+):
+
+    if question.strip():
+
+        with st.spinner(
+            f"{selected_employee['name']} sedang menganalisis..."
+        ):
+
+            answer = ai_response(
+                selected_employee,
+                question
+            )
+
+        st.markdown(answer)
+
+    else:
+
+        st.warning(
+            "Silakan masukkan pertanyaan terlebih dahulu."
+        )
+
+
+# ============================================================
+# DASHBOARD
+# ============================================================
+
+st.divider()
+
+st.subheader("📊 FLATTFORM Company Dashboard")
+
+col1, col2, col3, col4 = st.columns(4)
+
+col1.metric(
+    "AI Employees",
+    "25"
+)
+
+col2.metric(
+    "Departments",
+    str(len(departments))
+)
+
+col3.metric(
+    "Maritime Focus",
+    "100%"
+)
+
+col4.metric(
+    "Platform",
+    "AI"
+)
+
+
+# ============================================================
+# AI EMPLOYEE LIST
+# ============================================================
+
+st.divider()
+
+st.subheader("👥 25 AI Employees")
+
+for employee in AI_EMPLOYEES:
+
+    with st.expander(
+        f"{employee['icon']} {employee['name']} — {employee['department']}"
+    ):
+
+        st.write(
+            employee["scope"]
+        )
+
+
+# ============================================================
+# FOOTER
+# ============================================================
+
+st.divider()
+
+st.caption(
+    "FLATTFORM Maritime AI — Maritime Decision Support Platform"
+)
+
+st.caption(
+    "AI output must be verified against current regulations, "
+    "company SMS and competent professional judgement."
+)
